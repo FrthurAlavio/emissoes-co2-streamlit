@@ -10,7 +10,7 @@ df.rename(columns={df.columns[0]: 'estado'}, inplace=True)
 df['estado'] = df['estado'].str.strip().str.title()
 
 # Título do app
-st.title("Emissões de CO2 por Estado (1970-2023) Fonte:SEEG")
+st.title("Emissões de CO2 por Estado (1970-2023) Fonte : SEEG")
 
 # 3. Inputs do usuário com dropdowns (agora com `key` únicos)
 estados = sorted(df['estado'].unique())
