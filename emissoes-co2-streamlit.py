@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 # 1. Abrir e ler a tabela
-caminho_arquivo = r'C:\Users\Arthur\OneDrive\Área de Trabalho\vscodepython\co2estados(1970-2023).csv'
+caminho_arquivo = 'co2estados(1970-2023).csv'
 df = pd.read_csv(caminho_arquivo)
 
 # 2. Padronizar o nome da coluna de estados
