@@ -97,65 +97,75 @@ with col2:
     geojson_data = mapa_merged_limpo.to_json()
 
     # 6. Criar mapa interativo com Folium
-m = folium.Map(location=[-15.78, -47.93], zoom_start=4, tiles='CartoDB positron')
+    m = folium.Map(location=[-15.78, -47.93], zoom_start=4, tiles='CartoDB positron')
 
-# Valores mínimo e máximo para a escala
+    # Definir valores mínimo e máximo de emissões
 min_val = mapa_merged_limpo['emissoes'].min()
 max_val = mapa_merged_limpo['emissoes'].max()
 
-# Colormap personalizado com gradação de amarelo ao vermelho
+# Criar colormap personalizado (gradiente amarelo → vermelho escuro)
 colormap = cm.LinearColormap(
     colors=['#FFFFCC', '#FFEDA0', '#FED976', '#FEB24C', '#FD8D3C', '#FC4E2A', '#BD0026'],
     vmin=min_val,
-    vmax=max_val,
-    caption=f'Emissões de CO₂e em {ano_usuario} (Milhões de Toneladas)'
-)
+    vmax=max_val
+).to_step(index=np.linspace(min_val, max_val, 8))  # cria faixas visuais mais claras
+colormap.caption = f'Emissões de CO₂e em {ano_usuario} (Milhões de Toneladas)'
 
-# Tooltip customizado
-tooltip = GeoJsonTooltip(
-    fields=['estado', 'emissoes', 'ranking'],
-    aliases=['Estado:', 'Emissões (Mt CO₂e):', 'Ranking Nacional:'],
-    localize=True,
-    sticky=True,
-    labels=True,
-    style="""
-        background-color: white;
-        border: 1px solid gray;
-        border-radius: 3px;
-        box-shadow: 2px 2px 2px #aaa;
-        font-size: 13px;
-        padding: 8px;
-    """
-)
-
-# Função de estilo baseada nas emissões
-def style_function(feature):
-    emissao = feature['properties'].get('emissoes', 0)
-    return {
-        'fillColor': colormap(emissao) if emissao is not None else '#gray',
-        'color': 'black',
-        'weight': 1,
-        'fillOpacity': 0.7,
-    }
-
-# Adicionar camada GeoJson com estilos e tooltip
-folium.GeoJson(
-    data=geojson_data,
-    name='Mapa de Emissões',
-    style_function=style_function,
-    tooltip=tooltip
+# Adicionar camada de Choropleth com colormap customizado
+folium.Choropleth(
+    geo_data=geojson_data,
+    name='choropleth',
+    data=mapa_merged_limpo,
+    columns=['estado', 'emissoes'],
+    key_on='feature.properties.estado',
+    fill_color=colormap,  # usa colormap personalizado
+    fill_opacity=0.7,
+    line_opacity=0.2,
+    highlight=True,
+    legend_name=f'Emissões de CO₂e em {ano_usuario} (Milhões de Toneladas)'
 ).add_to(m)
 
-# Adicionar colormap ao mapa
+# Adiciona o colormap manualmente ao mapa
 colormap.add_to(m)
+    
+    # Adicionar tooltips para mostrar informações ao passar o mouse
+    tooltip = GeoJsonTooltip(
+        fields=['estado', 'emissoes', 'ranking'],
+        aliases=['Estado:', 'Emissões (Mt CO₂e):', 'Ranking Nacional:'],
+        localize=True,
+        sticky=False,
+        labels=True,
+        style="""
+            background-color: #F0F0F0;
+            border: 2px solid black;
+            border-radius: 3px;
+            box-shadow: 3px 3px 3px #888888;
+            font-family: courier new;
+            font-size: 12px;
+            padding: 10px;
+        """
+    )
+    
+    # Adicionar a camada GeoJson com os tooltips
+    folium.GeoJson(
+        geojson_data,
+        name='Estados',
+        style_function=lambda x: {
+            'fillColor': 'transparent',
+            'color': 'black',
+            'weight': 1,
+            'fillOpacity': 0.0
+        },
+        tooltip=tooltip
+    ).add_to(m)
 
-# Adicionar controle de camadas
-folium.LayerControl().add_to(m)
+    # Adicionar controle de camadas
+    folium.LayerControl().add_to(m)
 
-# Exibir mapa no Streamlit
-st.markdown(f"### 🗺️ Mapa Interativo de Emissões de CO₂e por Estado Brasileiro ({ano_usuario})")
-st.markdown("*Passe o mouse sobre os estados para ver informações detalhadas*")
-st_data = st_folium(m, width=800, height=600)
+    # 7. Exibir mapa no Streamlit
+    st.markdown(f"### 🗺️ Mapa Interativo de Emissões de CO₂e por Estado Brasileiro ({ano_usuario})")
+    st.markdown("*Passe o mouse sobre os estados para ver informações detalhadas*")
+    st_data = st_folium(m, width=800, height=600)
 
 # Adicionar explicação sobre os dados
 st.markdown("""
