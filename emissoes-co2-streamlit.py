@@ -29,31 +29,31 @@ col1, col2 = st.columns([1, 2])
 with col1:
     estados = sorted(df['estado'].unique())
     anos = sorted([col for col in df.columns if col != 'estado'])
-    
+
     estado_usuario = st.selectbox("Escolha o estado:", estados)
     ano_usuario = st.selectbox("Escolha o ano:", anos)
-    
+
     if estado_usuario and ano_usuario:
         valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
         media_nacional = df[ano_usuario].mean()
         valor_max = df[ano_usuario].max()
         estado_max = df.loc[df[ano_usuario] == valor_max, 'estado'].values[0]
-        
+
         st.metric(
-            label=f"Emissões em {estado_usuario} ({ano_usuario})", 
+            label=f"Emissões em {estado_usuario} ({ano_usuario})",
             value=f"{round(valor_estado):,} Mt CO₂e",
             delta=f"{round(valor_estado - media_nacional, 1)} Mt em relação à média nacional"
         )
-        
+
         st.markdown("### Comparação Nacional")
         st.markdown(f"- **Média nacional:** {round(media_nacional, 1):,} Mt CO₂e")
         st.markdown(f"- **Maior emissor:** {estado_max} ({round(valor_max):,} Mt CO₂e)")
-        
+
         ranking = df[[ano_usuario, 'estado']].sort_values(by=ano_usuario, ascending=False)
         ranking = ranking.reset_index(drop=True)
         posicao = ranking[ranking['estado'] == estado_usuario].index[0] + 1
         st.markdown(f"- **Posição no ranking:** {posicao}º de {len(estados)} estados")
-        
+
         if int(ano_usuario) > 1970:
             ano_anterior = str(int(ano_usuario) - 1)
             if ano_anterior in df.columns:
@@ -75,6 +75,7 @@ with col2:
     mapa = carregar_mapa_estados()
 
     df_mapa = df[['estado', ano_usuario]].copy()
+    # Garante que a coluna 'ano_usuario' seja numérica, convertendo valores não numéricos para NaN
     df_mapa[ano_usuario] = pd.to_numeric(df_mapa[ano_usuario], errors='coerce')
     df_mapa.rename(columns={ano_usuario: 'emissoes'}, inplace=True)
 
@@ -90,32 +91,32 @@ with col2:
     geojson_data = mapa_merged_limpo.to_json()
 
     m = folium.Map(location=[-15.78, -47.93], zoom_start=4, tiles='CartoDB positron')
-
-    min_val = mapa_merged_limpo['emissoes'].min()
-    max_val = mapa_merged_limpo['emissoes'].max()
     
-    # Corrigir NaN em min/max
-    if pd.isna(min_val) or pd.isna(max_val):
+    # Filtra valores não nulos para calcular os limites da escala de cores
+    emissoes_validas = mapa_merged_limpo['emissoes'].dropna()
+    
+    if not emissoes_validas.empty:
+        min_val = emissoes_validas.min()
+        max_val = emissoes_validas.max()
+        
+        # Evita divisão por zero ou escala de cor inválida
+        if min_val == max_val:
+            max_val = min_val + 1
+            
+        n_bins = 5
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        threshold_scale = sorted(set([round(emissoes_validas.quantile(q)) for q in quantiles]))
+        
+        # Garante que threshold_scale tenha pelo menos 2 valores
+        if len(threshold_scale) < 2:
+            threshold_scale = np.linspace(min_val, max_val, num=2).tolist()
+            threshold_scale = [round(v) for v in threshold_scale]
+    else:
+        # Define uma escala padrão se não houver dados válidos
         min_val = 0
-        max_val = 100
+        max_val = 1
+        threshold_scale = [0, 0.2, 0.4, 0.6, 0.8, 1]
 
-    # Evitar valores iguais min e max
-    if min_val == max_val:
-        max_val = min_val + 1
-
-    # Gerar escala de cores com valores únicos e crescentes
-    n_bins = 5
-    quantiles = np.linspace(0, 1, n_bins + 1)
-    threshold_scale = sorted(set([round(mapa_merged_limpo['emissoes'].quantile(q)) for q in quantiles]))
-    
-    # Se não houver número suficiente de níveis únicos, criar escala linear simples
-    if len(threshold_scale) < 3:
-        step = (max_val - min_val) / (n_bins - 1)
-        threshold_scale = [round(min_val + step * i) for i in range(n_bins)]
-
-    # Garantir que thresholds estejam ordenados e sem duplicatas
-    threshold_scale = sorted(set(threshold_scale))
-    
     choro = folium.Choropleth(
         geo_data=geojson_data,
         name='Emissões de CO₂',
@@ -133,11 +134,11 @@ with col2:
 
     legend_html = f'''
     <div style="
-        position: fixed; 
-        bottom: 50px; 
-        right: 50px; 
-        width: 150px; 
-        height: 120px; 
+        position: fixed;
+        bottom: 50px;
+        right: 50px;
+        width: 150px;
+        height: 120px;
         background-color: white;
         border-radius: 5px;
         box-shadow: 0 0 5px rgba(0,0,0,0.2);
@@ -188,7 +189,7 @@ with col2:
             padding: 10px;
         """
     )
-    
+
     folium.GeoJson(
         geojson_data,
         name='Estados',
