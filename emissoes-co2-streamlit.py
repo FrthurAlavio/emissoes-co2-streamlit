@@ -45,7 +45,7 @@ if estado_usuario and ano_usuario:
 
     st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}** Milhões de Toneladas.")
 
-except Exception as e:
+   except Exception as e:
     st.error(f"Ocorreu um erro: {e}")
 
 
