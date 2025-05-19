@@ -1,7 +1,8 @@
 import pandas as pd
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import streamlit as st
+import folium
+from streamlit_folium import st_folium
 
 # 1. Abrir e ler a tabela
 caminho_arquivo = 'co2estados(1970-2023).csv'
@@ -47,7 +48,7 @@ if estado_usuario and ano_usuario:
     except Exception as e:
         st.error(f"Ocorreu um erro: {e}")
 
-# 5. Mapa por estado
+# 5. Mapa por estado (interativo)
 @st.cache_data
 def carregar_mapa_estados():
     url = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson'
@@ -62,19 +63,33 @@ df_mapa = df[['estado', ano_usuario]].copy()
 df_mapa[ano_usuario] = pd.to_numeric(df_mapa[ano_usuario], errors='coerce')
 mapa_merged = mapa.merge(df_mapa, on='estado', how='left')
 
-# Plot do mapa
-st.markdown(f"## 🗺️ Mapa de emissões de CO₂ por estado ({ano_usuario})")
+# Mapa interativo com Folium
+st.markdown(f"## 🗺️ Mapa interativo de emissões de CO₂ por estado ({ano_usuario})")
 
-fig, ax = plt.subplots(1, 1, figsize=(10, 8))
-mapa_merged.plot(
-    column=ano_usuario,
-    ax=ax,
-    cmap='Reds',
-    legend=True,
-    legend_kwds={'label': f"Emissões de CO₂e (toneladas)", 'orientation': "horizontal"},
-    missing_kwds={"color": "lightgrey", "label": "Sem dados"}
-)
+mapa_folium = folium.Map(location=[-15.788497, -47.879873], zoom_start=4)
 
-ax.set_title(f"Emissões de CO₂e por Estado - {ano_usuario}", fontsize=14)
-ax.axis('off')
-st.pyplot(fig)
+folium.Choropleth(
+    geo_data=mapa_merged,
+    name='choropleth',
+    data=mapa_merged,
+    columns=['estado', ano_usuario],
+    key_on='feature.properties.estado',
+    fill_color='YlOrRd',
+    fill_opacity=0.7,
+    line_opacity=0.2,
+    legend_name='Emissões de CO₂e (Milhões de Toneladas)',
+    nan_fill_color="gray"
+).add_to(mapa_folium)
+
+folium.GeoJson(
+    mapa_merged,
+    name="Estados",
+    tooltip=folium.features.GeoJsonTooltip(
+        fields=['estado', ano_usuario],
+        aliases=['Estado:', 'Emissões (Mt):'],
+        localize=True
+    )
+).add_to(mapa_folium)
+
+# Exibe o mapa interativo
+st_data = st_folium(mapa_folium, width=800, height=600)
