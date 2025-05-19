@@ -25,28 +25,29 @@ ano_usuario = st.selectbox("Escolha o ano:", anos, key="ano_selectbox")
 
 # 4. Lógica de análise e exibição
 if estado_usuario and ano_usuario:
-    try:
-        valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
-        media_nacional = df[ano_usuario].mean()
+   try:
+    valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
+    media_nacional = df[ano_usuario].mean()
 
-        st.markdown(f"### {estado_usuario} emitiu **{round(valor_estado):,} Milhões de Toneladas de CO₂e** no ano de **{ano_usuario}**.")
+    st.markdown(f"### {estado_usuario} emitiu **{round(valor_estado):,} Milhões de Toneladas de CO₂e** no ano de **{ano_usuario}**.")
 
-        if media_nacional != 0:
-            razao = valor_estado / media_nacional
-            if razao > 1:
-                st.info(f"O valor está **{round(razao, 2)}x acima da média nacional**.")
-            elif razao < 1:
-                st.info(f"O valor está **{round(1 / razao, 2)}x abaixo da média nacional**.")
-            else:
-                st.info("O valor está igual à média nacional.")
+    if media_nacional == 0:
+        st.warning("A média nacional é zero, comparação não é possível.")
+    else:
+        razao = valor_estado / media_nacional
+
+        if razao > 1:
+            st.info(f"O valor está **{round(razao, 2)}x acima da média nacional**.")
+        elif razao < 1:
+            st.info(f"O valor está **{round(1 / razao, 2)}x abaixo da média nacional**.")
         else:
-            st.warning("A média nacional é zero, comparação não é possível.")
-                
-                st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}**")
+            st.info("O valor está igual à média nacional.")
 
+    st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}** Milhões de Toneladas.")
 
-    except Exception as e:
-        st.error(f"Ocorreu um erro: {e}")
+except Exception as e:
+    st.error(f"Ocorreu um erro: {e}")
+
 
 # 5. Mapa interativo
 @st.cache_data
