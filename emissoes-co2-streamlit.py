@@ -28,7 +28,7 @@ if estado_usuario and ano_usuario:
         valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
         media_nacional = df[ano_usuario].mean()
 
-        st.markdown(f"### {estado_usuario} emitiu **{round(valor_estado):,} CO₂e** no ano de **{ano_usuario}**.")
+        st.markdown(f"### {estado_usuario} emitiu **{round(valor_estado):,} Milhões de Toneladas de CO₂e** no ano de **{ano_usuario}**.")
 
         if media_nacional == 0:
             st.warning("A média nacional é zero, comparação não é possível.")
@@ -36,11 +36,13 @@ if estado_usuario and ano_usuario:
             razao = valor_estado / media_nacional
 
             if razao > 1:
-                st.info(f"O valor está **{round(razao, 2)}x acima da média nacional** ({round(media_nacional, 2):,} CO₂e).")
+                st.info(f"O valor está **{round(razao, 2)}x acima da média nacional**.")
             elif razao < 1:
-                st.info(f"O valor está **{round(1 / razao, 2)}x abaixo da média nacional** ({round(media_nacional, 2):,} CO₂e).")
+                st.info(f"O valor está **{round(1 / razao, 2)}x abaixo da média nacional**.")
             else:
                 st.info("O valor está igual à média nacional.")
+
+      st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}**")
 
     except Exception as e:
         st.error(f"Ocorreu um erro: {e}")
