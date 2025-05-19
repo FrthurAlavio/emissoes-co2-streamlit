@@ -4,7 +4,6 @@ import folium
 from streamlit_folium import st_folium
 import streamlit as st
 import numpy as np
-import branca.colormap as cm
 from folium.features import GeoJsonTooltip
 
 # 1. Ler o CSV
@@ -99,38 +98,112 @@ with col2:
     # 6. Criar mapa interativo com Folium
     m = folium.Map(location=[-15.78, -47.93], zoom_start=4, tiles='CartoDB positron')
 
-    # Criar uma escala de cores personalizada com branca
+    # Criar uma escala de cores personalizada minimalista
     min_val = mapa_merged_limpo['emissoes'].min()
     max_val = mapa_merged_limpo['emissoes'].max()
     
-    # Criar faixas de valores para uma legenda mais informativa
-    n_bins = 7
-    bins = np.linspace(min_val, max_val, n_bins)
+    # Usar um esquema de cores mais clean e minimalista
+    # Vamos usar menos níveis para uma legenda mais limpa
+    n_bins = 5
     
-    # Mapa de cores personalizado com gradação de cores do amarelo para vermelho intenso
-    colormap = cm.LinearColormap(
-        colors=['#FFFFCC', '#FFEDA0', '#FED976', '#FEB24C', '#FD8D3C', '#FC4E2A', '#BD0026'], 
-        vmin=min_val,
-        vmax=max_val,
-        caption=f'Emissões de CO₂e em {ano_usuario} (Milhões de Toneladas)'
-    )
+    # Calcular intervalos significativos em vez de lineares para melhor interpretação
+    # Arredondar para facilitar leitura da legenda
+    intervalo_base = (max_val - min_val) / n_bins
+    min_arredondado = int(min_val)
+    intervalo_arredondado = int(intervalo_base)
+    if intervalo_arredondado < 1:
+        intervalo_arredondado = 1
     
-    # Adicionar o choropleth melhorado
-    folium.Choropleth(
+    # Usar uma paleta de cores mais elegante e minimalista
+    choro = folium.Choropleth(
         geo_data=geojson_data,
-        name='choropleth',
+        name='Emissões de CO₂',
         data=mapa_merged_limpo,
         columns=['estado', 'emissoes'],
         key_on='feature.properties.estado',
-        fill_color='YlOrRd',
+        fill_color='RdYlGn_r',  # Paleta invertida mais elegante
         fill_opacity=0.7,
         line_opacity=0.2,
         highlight=True,
-        legend_name=f'Emissões de CO₂e em {ano_usuario} (Milhões de Toneladas)'
+        legend_name=None,  # Remover título da legenda padrão
+        smooth_factor=0.5,
+        threshold_scale=[min_arredondado + i*intervalo_arredondado for i in range(n_bins+1)]
     ).add_to(m)
     
-    # Adicionar o mapa de cores personalizado ao mapa
-    colormap.add_to(m)
+    # Personalizar a legenda após adicioná-la ao mapa
+    legend_html = '''
+    <div style="
+        position: fixed; 
+        bottom: 50px; 
+        right: 50px; 
+        width: 150px; 
+        height: 120px; 
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        font-size: 12px;
+        padding: 10px;
+        z-index: 9999;
+        ">
+        <p style="margin-top: 0;
+                  margin-bottom: 5px;
+                  font-weight: bold;
+                  text-align: center;">
+            CO₂e ({})
+        </p>
+        <div style="display: flex;
+                    align-items: center;
+                    margin-bottom: 5px;">
+            <span style="display: inline-block;
+                        height: 15px;
+                        width: 30px;
+                        background: #d73027;
+                        margin-right: 5px;"></span>
+            <span>Alto</span>
+        </div>
+        <div style="display: flex;
+                    align-items: center;
+                    margin-bottom: 5px;">
+            <span style="display: inline-block;
+                        height: 15px;
+                        width: 30px;
+                        background: #fc8d59;
+                        margin-right: 5px;"></span>
+            <span>Médio-Alto</span>
+        </div>
+        <div style="display: flex;
+                    align-items: center;
+                    margin-bottom: 5px;">
+            <span style="display: inline-block;
+                        height: 15px;
+                        width: 30px;
+                        background: #fee08b;
+                        margin-right: 5px;"></span>
+            <span>Médio</span>
+        </div>
+        <div style="display: flex;
+                    align-items: center;
+                    margin-bottom: 5px;">
+            <span style="display: inline-block;
+                        height: 15px;
+                        width: 30px;
+                        background: #d9ef8b;
+                        margin-right: 5px;"></span>
+            <span>Médio-Baixo</span>
+        </div>
+        <div style="display: flex;
+                    align-items: center;">
+            <span style="display: inline-block;
+                        height: 15px;
+                        width: 30px;
+                        background: #91cf60;
+                        margin-right: 5px;"></span>
+            <span>Baixo</span>
+        </div>
+    </div>
+    '''.format(ano_usuario)
+    
+    m.get_root().html.add_child(folium.Element(legend_html))
     
     # Adicionar tooltips para mostrar informações ao passar o mouse
     tooltip = GeoJsonTooltip(
