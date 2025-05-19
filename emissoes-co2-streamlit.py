@@ -42,6 +42,9 @@ if estado_usuario and ano_usuario:
         else:
             st.warning("A média nacional é zero, comparação não é possível.")
 
+                st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}**")
+
+
     except Exception as e:
         st.error(f"Ocorreu um erro: {e}")
 
