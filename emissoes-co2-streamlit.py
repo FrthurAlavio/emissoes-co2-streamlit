@@ -102,19 +102,36 @@ with col2:
     min_val = mapa_merged_limpo['emissoes'].min()
     max_val = mapa_merged_limpo['emissoes'].max()
     
+    # Verificar valores min/max para garantir que são válidos
+    if pd.isna(min_val) or pd.isna(max_val):
+        min_val = 0
+        max_val = 100
+        
+    # Garantir que min_val é diferente de max_val para evitar erro na escala
+    if min_val == max_val:
+        max_val = min_val + 1
+        
     # Usar um esquema de cores mais clean e minimalista
-    # Vamos usar menos níveis para uma legenda mais limpa
     n_bins = 5
     
-    # Calcular intervalos significativos em vez de lineares para melhor interpretação
-    # Arredondar para facilitar leitura da legenda
-    intervalo_base = (max_val - min_val) / n_bins
-    min_arredondado = int(min_val)
-    intervalo_arredondado = int(intervalo_base)
-    if intervalo_arredondado < 1:
-        intervalo_arredondado = 1
+    # Criar escala usando quantis para melhor distribuição das cores
+    # Isso evita problemas com valores extremos distorcendo a escala
+    quantiles = np.linspace(0, 1, n_bins+1)
+    threshold_scale = [round(mapa_merged_limpo['emissoes'].quantile(q)) for q in quantiles]
     
-    # Usar uma paleta de cores mais elegante e minimalista
+    # Garantir que todos os valores na escala são diferentes
+    # Problema comum que causa erro no Choropleth
+    unique_thresholds = []
+    for val in threshold_scale:
+        if val not in unique_thresholds:
+            unique_thresholds.append(val)
+    
+    # Se não tivermos valores suficientes, criar uma escala linear
+    if len(unique_thresholds) < 3:
+        step = (max_val - min_val) / 4
+        unique_thresholds = [min_val + step*i for i in range(5)]
+    
+    # Adicionar o choropleth melhorado
     choro = folium.Choropleth(
         geo_data=geojson_data,
         name='Emissões de CO₂',
@@ -127,7 +144,7 @@ with col2:
         highlight=True,
         legend_name=None,  # Remover título da legenda padrão
         smooth_factor=0.5,
-        threshold_scale=[min_arredondado + i*intervalo_arredondado for i in range(n_bins+1)]
+        threshold_scale=unique_thresholds
     ).add_to(m)
     
     # Personalizar a legenda após adicioná-la ao mapa
