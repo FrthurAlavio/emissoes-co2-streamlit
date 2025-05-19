@@ -1,5 +1,7 @@
-streamlit
 pandas
 geopandas
+streamlit
 folium
 streamlit-folium
+branca
+matplotlib
