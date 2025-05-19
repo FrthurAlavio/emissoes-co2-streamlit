@@ -24,4 +24,4 @@ if estado_usuario and ano_usuario:
     valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
     media_nacional = df[ano_usuario].mean()
 
-    st.markdown(f"### {estado_usuario} emitiu **{round(valor_estado):,} Milhões de Ton_**_
+st.markdown(f"### {estado_usuario} emitiu **{round(valor_estado):,} Milhões de Toneladas de CO₂e** no ano de **{ano_usuario}**.")
