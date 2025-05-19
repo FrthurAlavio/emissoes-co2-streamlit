@@ -41,7 +41,7 @@ if estado_usuario and ano_usuario:
                 st.info("O valor está igual à média nacional.")
         else:
             st.warning("A média nacional é zero, comparação não é possível.")
-
+                
                 st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}**")
 
 
