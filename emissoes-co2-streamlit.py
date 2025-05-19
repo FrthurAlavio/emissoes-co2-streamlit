@@ -42,8 +42,8 @@ if estado_usuario and ano_usuario:
             else:
                 st.info("O valor está igual à média nacional.")
 
-      st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}**")
-
+        st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}**")
+        
     except Exception as e:
         st.error(f"Ocorreu um erro: {e}")
 
