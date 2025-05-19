@@ -45,7 +45,7 @@ if estado_usuario and ano_usuario:
     except Exception as e:
         st.error(f"Ocorreu um erro: {e}")
 
-# 5. Mapa interativo por estado
+# 5. Mapa interativo
 @st.cache_data
 def carregar_mapa_estados():
     url = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson'
@@ -55,22 +55,26 @@ def carregar_mapa_estados():
 
 mapa = carregar_mapa_estados()
 
-# Junta dados de CO2 ao mapa
+# Junta dados
 df_mapa = df[['estado', ano_usuario]].copy()
 df_mapa[ano_usuario] = pd.to_numeric(df_mapa[ano_usuario], errors='coerce')
+
+# Converte valores para float padrão do Python
+df_mapa[ano_usuario] = df_mapa[ano_usuario].astype(float)
+
 mapa_merged = mapa.merge(df_mapa, on='estado', how='left')
 
-# Corrige tipo de dado
-mapa_merged[ano_usuario] = mapa_merged[ano_usuario].astype(float)
+# Reduz as colunas a apenas o necessário para o GeoJson
+mapa_geojson = mapa_merged[['estado', ano_usuario, 'geometry']].copy()
 
-# Cria o mapa com Folium
+# Cria mapa
 m = folium.Map(location=[-14.2350, -51.9253], zoom_start=4)
 
 # Choropleth
 folium.Choropleth(
-    geo_data=mapa_merged.__geo_interface__,
+    geo_data=mapa_geojson.to_json(),
     name="choropleth",
-    data=mapa_merged,
+    data=df_mapa,
     columns=["estado", ano_usuario],
     key_on="feature.properties.estado",
     fill_color="YlOrRd",
@@ -80,13 +84,13 @@ folium.Choropleth(
     nan_fill_color="lightgray"
 ).add_to(m)
 
-# Tooltip com dados
+# Tooltip
 folium.GeoJson(
-    mapa_merged,
+    data=mapa_geojson.to_json(),
+    name="tooltip",
     tooltip=folium.GeoJsonTooltip(
-        fields=["estado", ano_usuario],
-        aliases=["Estado:", "CO₂e (Mt):"],
-        localize=True
+        fields=["estado"],
+        aliases=["Estado:"]
     )
 ).add_to(m)
 
