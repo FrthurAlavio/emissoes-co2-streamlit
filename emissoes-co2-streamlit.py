@@ -13,7 +13,7 @@ df['estado'] = df['estado'].str.strip().str.title()
 
 # Título do app
 st.title("🌀 Emissões de CO2 por Estado (1970-2023)")
-st.markdown("📊 Fonte: [SEEG](https://seeg.eco.br/dados/) | 🌎 Mapa com base no GeoJSON via Click That 'Hood")
+st.markdown("📊 Fonte: [SEEG](https://seeg.eco.br/dados/)")
 
 # 3. Inputs do usuário com dropdowns
 estados = sorted(df['estado'].unique())
