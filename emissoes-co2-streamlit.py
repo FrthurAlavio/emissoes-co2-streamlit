@@ -4,6 +4,7 @@ import folium
 from streamlit_folium import st_folium
 import streamlit as st
 import numpy as np
+import branca.colormap as cm
 from folium.features import GeoJsonTooltip
 
 # 1. Ler o CSV
@@ -27,44 +28,47 @@ st.markdown("📊 **Fonte:** [SEEG - Sistema de Estimativas de Emissões de Gase
 col1, col2 = st.columns([1, 2])
 
 with col1:
+    # Dropdowns para seleção
     estados = sorted(df['estado'].unique())
     anos = sorted([col for col in df.columns if col != 'estado'])
-
+    
     estado_usuario = st.selectbox("Escolha o estado:", estados)
     ano_usuario = st.selectbox("Escolha o ano:", anos)
-
+    
     if estado_usuario and ano_usuario:
         valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
         media_nacional = df[ano_usuario].mean()
         valor_max = df[ano_usuario].max()
         estado_max = df.loc[df[ano_usuario] == valor_max, 'estado'].values[0]
-
+        
+        # Contexto adicional com métricas
         st.metric(
-            label=f"Emissões em {estado_usuario} ({ano_usuario})",
+            label=f"Emissões em {estado_usuario} ({ano_usuario})", 
             value=f"{round(valor_estado):,} Mt CO₂e",
             delta=f"{round(valor_estado - media_nacional, 1)} Mt em relação à média nacional"
         )
-
+        
+        # Estatísticas comparativas
         st.markdown("### Comparação Nacional")
         st.markdown(f"- **Média nacional:** {round(media_nacional, 1):,} Mt CO₂e")
         st.markdown(f"- **Maior emissor:** {estado_max} ({round(valor_max):,} Mt CO₂e)")
-
+        
+        # Posição no ranking
         ranking = df[[ano_usuario, 'estado']].sort_values(by=ano_usuario, ascending=False)
         ranking = ranking.reset_index(drop=True)
         posicao = ranking[ranking['estado'] == estado_usuario].index[0] + 1
         st.markdown(f"- **Posição no ranking:** {posicao}º de {len(estados)} estados")
-
+        
+        # Contexto histórico se disponível
         if int(ano_usuario) > 1970:
             ano_anterior = str(int(ano_usuario) - 1)
             if ano_anterior in df.columns:
                 valor_anterior = df.loc[df['estado'] == estado_usuario, ano_anterior].values[0]
-                if valor_anterior != 0:
-                    variacao = ((valor_estado - valor_anterior) / valor_anterior) * 100
-                    st.markdown(f"- **Variação desde {ano_anterior}:** {variacao:.1f}%")
-                else:
-                    st.markdown(f"- **Variação desde {ano_anterior}:** N/A (valor anterior zero)")
+                variacao = ((valor_estado - valor_anterior) / valor_anterior) * 100
+                st.markdown(f"- **Variação desde {ano_anterior}:** {variacao:.1f}%")
 
 with col2:
+    # 2. Carregar mapa GeoJSON dos estados do Brasil
     @st.cache_data
     def carregar_mapa_estados():
         url = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson'
@@ -74,105 +78,61 @@ with col2:
 
     mapa = carregar_mapa_estados()
 
+    # 3. Fazer merge dos dados
     df_mapa = df[['estado', ano_usuario]].copy()
-    # Garante que a coluna 'ano_usuario' seja numérica, convertendo valores não numéricos para NaN
     df_mapa[ano_usuario] = pd.to_numeric(df_mapa[ano_usuario], errors='coerce')
     df_mapa.rename(columns={ano_usuario: 'emissoes'}, inplace=True)
 
     mapa_merged = mapa.merge(df_mapa, on='estado', how='left')
 
+    # 4. Limpar o GeoDataFrame para deixar só as colunas necessárias antes de gerar geojson
     mapa_merged_limpo = mapa_merged[['estado', 'emissoes', 'geometry']].copy()
     
-    # Criar ranking
+    # Adicionar um ranking para cada estado
     df_ranking = df_mapa[['estado', 'emissoes']].sort_values(by='emissoes', ascending=False)
     df_ranking['ranking'] = range(1, len(df_ranking) + 1)
     mapa_merged_limpo = mapa_merged_limpo.merge(df_ranking[['estado', 'ranking']], on='estado', how='left')
 
+    # 5. Gerar GeoJSON para usar no Folium
     geojson_data = mapa_merged_limpo.to_json()
 
+    # 6. Criar mapa interativo com Folium
     m = folium.Map(location=[-15.78, -47.93], zoom_start=4, tiles='CartoDB positron')
-    
-    # Filtra valores não nulos para calcular os limites da escala de cores
-    emissoes_validas = mapa_merged_limpo['emissoes'].dropna()
-    
-    if not emissoes_validas.empty:
-        min_val = emissoes_validas.min()
-        max_val = emissoes_validas.max()
-        
-        # Evita divisão por zero ou escala de cor inválida
-        if min_val == max_val:
-            max_val = min_val + 1
-            
-        n_bins = 5
-        quantiles = np.linspace(0, 1, n_bins + 1)
-        threshold_scale = sorted(set([round(emissoes_validas.quantile(q)) for q in quantiles]))
-        
-        # Garante que threshold_scale tenha pelo menos 2 valores
-        if len(threshold_scale) < 2:
-            threshold_scale = np.linspace(min_val, max_val, num=2).tolist()
-            threshold_scale = [round(v) for v in threshold_scale]
-    else:
-        # Define uma escala padrão se não houver dados válidos
-        min_val = 0
-        max_val = 1
-        threshold_scale = [0, 0.2, 0.4, 0.6, 0.8, 1]
 
-    choro = folium.Choropleth(
+    # Criar uma escala de cores personalizada com branca
+    min_val = mapa_merged_limpo['emissoes'].min()
+    max_val = mapa_merged_limpo['emissoes'].max()
+    
+    # Criar faixas de valores para uma legenda mais informativa
+    n_bins = 7
+    bins = np.linspace(min_val, max_val, n_bins)
+    
+    # Mapa de cores personalizado com gradação de cores do amarelo para vermelho intenso
+    colormap = cm.LinearColormap(
+        colors=['#FFFFCC', '#FFEDA0', '#FED976', '#FEB24C', '#FD8D3C', '#FC4E2A', '#BD0026'], 
+        vmin=min_val,
+        vmax=max_val,
+        caption=f'Emissões de CO₂e em {ano_usuario} (Milhões de Toneladas)'
+    )
+    
+    # Adicionar o choropleth melhorado
+    folium.Choropleth(
         geo_data=geojson_data,
-        name='Emissões de CO₂',
+        name='choropleth',
         data=mapa_merged_limpo,
         columns=['estado', 'emissoes'],
         key_on='feature.properties.estado',
-        fill_color='RdYlGn_r',
+        fill_color='YlOrRd',
         fill_opacity=0.7,
         line_opacity=0.2,
         highlight=True,
-        legend_name=None,
-        smooth_factor=0.5,
-        threshold_scale=threshold_scale
+        legend_name=f'Emissões de CO₂e em {ano_usuario} (Milhões de Toneladas)'
     ).add_to(m)
-
-    legend_html = f'''
-    <div style="
-        position: fixed;
-        bottom: 50px;
-        right: 50px;
-        width: 150px;
-        height: 120px;
-        background-color: white;
-        border-radius: 5px;
-        box-shadow: 0 0 5px rgba(0,0,0,0.2);
-        font-size: 12px;
-        padding: 10px;
-        z-index: 9999;
-        ">
-        <p style="margin-top: 0; margin-bottom: 5px; font-weight: bold; text-align: center;">
-            CO₂e ({ano_usuario})
-        </p>
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-            <span style="display: inline-block; height: 15px; width: 30px; background: #d73027; margin-right: 5px;"></span>
-            <span>Alto</span>
-        </div>
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-            <span style="display: inline-block; height: 15px; width: 30px; background: #fc8d59; margin-right: 5px;"></span>
-            <span>Médio-Alto</span>
-        </div>
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-            <span style="display: inline-block; height: 15px; width: 30px; background: #fee08b; margin-right: 5px;"></span>
-            <span>Médio</span>
-        </div>
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-            <span style="display: inline-block; height: 15px; width: 30px; background: #d9ef8b; margin-right: 5px;"></span>
-            <span>Médio-Baixo</span>
-        </div>
-        <div style="display: flex; align-items: center;">
-            <span style="display: inline-block; height: 15px; width: 30px; background: #91cf60; margin-right: 5px;"></span>
-            <span>Baixo</span>
-        </div>
-    </div>
-    '''
-    m.get_root().html.add_child(folium.Element(legend_html))
-
+    
+    # Adicionar o mapa de cores personalizado ao mapa
+    colormap.add_to(m)
+    
+    # Adicionar tooltips para mostrar informações ao passar o mouse
     tooltip = GeoJsonTooltip(
         fields=['estado', 'emissoes', 'ranking'],
         aliases=['Estado:', 'Emissões (Mt CO₂e):', 'Ranking Nacional:'],
@@ -189,7 +149,8 @@ with col2:
             padding: 10px;
         """
     )
-
+    
+    # Adicionar a camada GeoJson com os tooltips
     folium.GeoJson(
         geojson_data,
         name='Estados',
@@ -202,12 +163,15 @@ with col2:
         tooltip=tooltip
     ).add_to(m)
 
+    # Adicionar controle de camadas
     folium.LayerControl().add_to(m)
 
+    # 7. Exibir mapa no Streamlit
     st.markdown(f"### 🗺️ Mapa Interativo de Emissões de CO₂e por Estado Brasileiro ({ano_usuario})")
     st.markdown("*Passe o mouse sobre os estados para ver informações detalhadas*")
     st_data = st_folium(m, width=800, height=600)
 
+# Adicionar explicação sobre os dados
 st.markdown("""
 ## ℹ️ Sobre os Dados
 Os dados apresentados neste mapa representam as emissões de gases de efeito estufa (GEE) convertidas em CO₂ equivalente (CO₂e).
