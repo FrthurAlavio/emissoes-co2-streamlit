@@ -3,6 +3,7 @@ import geopandas as gpd
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
+from branca.colormap import linear
 
 # 1. Abrir e ler a tabela
 caminho_arquivo = 'co2estados(1970-2023).csv'
@@ -13,43 +14,22 @@ df.rename(columns={df.columns[0]: 'estado'}, inplace=True)
 df['estado'] = df['estado'].str.strip().str.title()
 
 # Título do app
-st.title("🌀 Emissões de CO₂ por Estado (1970-2023)")
+st.title("🌀 Emissões de CO2 por Estado (1970-2023)")
 st.markdown("📊 Fonte: [SEEG](https://seeg.eco.br/dados/)")
 
-# 3. Inputs do usuário com dropdowns
+# Inputs do usuário
 estados = sorted(df['estado'].unique())
 anos = sorted([col for col in df.columns if col != 'estado'])
 
-estado_usuario = st.selectbox("Escolha o estado:", estados, key="estado_selectbox")
-ano_usuario = st.selectbox("Escolha o ano:", anos, key="ano_selectbox")
+estado_usuario = st.selectbox("Escolha o estado:", estados)
+ano_usuario = st.selectbox("Escolha o ano:", anos)
 
-# 4. Lógica de análise e exibição
+# Mostrar dados do estado selecionado
 if estado_usuario and ano_usuario:
-   try:
     valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
-    media_nacional = df[ano_usuario].mean()
-
     st.markdown(f"### {estado_usuario} emitiu **{round(valor_estado):,} Milhões de Toneladas de CO₂e** no ano de **{ano_usuario}**.")
 
-    if media_nacional == 0:
-        st.warning("A média nacional é zero, comparação não é possível.")
-    else:
-        razao = valor_estado / media_nacional
-
-        if razao > 1:
-            st.info(f"O valor está **{round(razao, 2)}x acima da média nacional**.")
-        elif razao < 1:
-            st.info(f"O valor está **{round(1 / razao, 2)}x abaixo da média nacional**.")
-        else:
-            st.info("O valor está igual à média nacional.")
-
-    st.markdown(f"Média nacional de CO2e em {ano_usuario}: **{round(media_nacional, 2)}** Milhões de Toneladas.")
-
-   except Exception as e:
-    st.error(f"Ocorreu um erro: {e}")
-
-
-# 5. Mapa interativo
+# Função para carregar mapa
 @st.cache_data
 def carregar_mapa_estados():
     url = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson'
@@ -59,45 +39,55 @@ def carregar_mapa_estados():
 
 mapa = carregar_mapa_estados()
 
-# Junta dados
+# Preparar dados para o mapa
 df_mapa = df[['estado', ano_usuario]].copy()
 df_mapa[ano_usuario] = pd.to_numeric(df_mapa[ano_usuario], errors='coerce')
-
-# Converte valores para float padrão do Python
-df_mapa[ano_usuario] = df_mapa[ano_usuario].astype(float)
-
 mapa_merged = mapa.merge(df_mapa, on='estado', how='left')
 
-# Reduz as colunas a apenas o necessário para o GeoJson
-mapa_geojson = mapa_merged[['estado', ano_usuario, 'geometry']].copy()
-
-# Cria mapa
+# Criar mapa folium centralizado no Brasil
 m = folium.Map(location=[-14.2350, -51.9253], zoom_start=4)
 
-# Choropleth
+# Criar colormap
+min_val = mapa_merged[ano_usuario].min()
+max_val = mapa_merged[ano_usuario].max()
+colormap = linear.Reds_09.scale(min_val, max_val)
+colormap.caption = f'Emissões de CO₂e (Milhões Toneladas) - {ano_usuario}'
+
+# Adicionar Choropleth
 folium.Choropleth(
-    geo_data=mapa_geojson.to_json(),
-    name="choropleth",
-    data=df_mapa,
-    columns=["estado", ano_usuario],
-    key_on="feature.properties.estado",
-    fill_color="YlOrRd",
+    geo_data=mapa_merged,
+    data=mapa_merged,
+    columns=['estado', ano_usuario],
+    key_on='feature.properties.estado',
+    fill_color='Reds',
     fill_opacity=0.7,
     line_opacity=0.2,
-    legend_name=f"Emissões de CO₂e em {ano_usuario} (milhões de toneladas)",
-    nan_fill_color="lightgray"
+    legend_name='Emissões de CO₂e (Milhões Toneladas)',
+    highlight=True,
+    nan_fill_color='lightgrey'
 ).add_to(m)
 
-# Tooltip
-folium.GeoJson(
-    data=mapa_geojson.to_json(),
-    name="tooltip",
-    tooltip=folium.GeoJsonTooltip(
-        fields=["estado"],
-        aliases=["Estado:"]
-    )
-).add_to(m)
+# Adicionar popups com estado e valor
+for _, row in mapa_merged.iterrows():
+    estado = row['estado']
+    valor = row[ano_usuario]
+    if pd.notnull(valor):
+        popup_text = f"{estado}: {round(valor,2):,} Milhões Toneladas"
+    else:
+        popup_text = f"{estado}: Sem dados"
+    
+    folium.GeoJson(
+        row['geometry'],
+        style_function=lambda x: {'fillColor': 'transparent', 'color': 'black', 'weight': 0.5},
+        tooltip=popup_text
+    ).add_to(m)
 
-# Exibe no Streamlit
-st.markdown("## 🌎 Mapa Interativo de Emissões")
-st_folium(m, width=800, height=600)
+# Adicionar legenda (colormap)
+colormap.add_to(m)
+
+# Adicionar controle de camadas
+folium.LayerControl().add_to(m)
+
+# Exibir mapa no Streamlit
+st.markdown(f"## 🗺️ Mapa interativo de emissões de CO₂ por estado ({ano_usuario})")
+st_folium(m, width=700, height=500)
