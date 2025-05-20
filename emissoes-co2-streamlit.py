@@ -3,6 +3,7 @@ import folium
 import json
 import streamlit as st
 from streamlit_folium import st_folium
+from branca.element import Template, MacroElement
 
 # 1. Carregar o GeoJSON com as siglas
 with open("br_states.json", encoding="utf-8") as f:
@@ -23,6 +24,8 @@ estado_para_sigla = {
     'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC', 'São Paulo': 'SP',
     'Sergipe': 'SE', 'Tocantins': 'TO'
 }
+# Também criar o mapeamento inverso de sigla para estado
+sigla_para_estado = {v: k for k, v in estado_para_sigla.items()}
 df['sigla'] = df['estado'].map(estado_para_sigla)
 
 # 4. Interface Streamlit
@@ -71,13 +74,22 @@ if estado_usuario and ano_usuario:
 st.markdown("### 🗺️ Mapa Interativo")
 
 # Criar DataFrame para o ano selecionado com siglas e valores
-data_para_mapa = df[['sigla', ano_usuario]].copy()
-data_para_mapa.columns = ['UF', 'valor']
+data_para_mapa = df[['sigla', 'estado', ano_usuario]].copy()
+data_para_mapa.columns = ['UF', 'Estado', 'valor']
 
 # Criar mapa com Folium
 mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=4, tiles='cartodbpositron')
 
-folium.Choropleth(
+# Preparar o tooltip com formatação adequada
+tooltip = folium.features.GeoJsonTooltip(
+    fields=['id', 'valor_co2'],
+    aliases=['Estado:', 'Emissões de CO₂:'],
+    style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;"),
+    sticky=True
+)
+
+# Criar o choropleth e adicionar interatividade com tooltip
+choropleth = folium.Choropleth(
     geo_data=geojson_data,
     data=data_para_mapa,
     columns=['UF', 'valor'],
@@ -88,6 +100,23 @@ folium.Choropleth(
     highlight=True,
     line_color='black',
 ).add_to(mapa)
+
+# Adicionar os dados de emissão para cada estado no GeoJSON
+for feature in choropleth.geojson.data['features']:
+    state_id = feature['id']
+    if state_id in data_para_mapa['UF'].values:
+        valor = data_para_mapa.loc[data_para_mapa['UF'] == state_id, 'valor'].values[0]
+        nome_estado = sigla_para_estado.get(state_id, state_id)
+        feature['properties']['valor_co2'] = f"{int(round(valor)):,} Mt CO₂e"
+        feature['properties']['nome_estado'] = nome_estado
+
+# Adicionar o tooltip ao choropleth
+folium.GeoJsonTooltip(
+    fields=['nome_estado', 'valor_co2'],
+    aliases=['Estado:', 'Emissões:'],
+    style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;"),
+    sticky=True
+).add_to(choropleth.geojson)
 
 st_folium(mapa, width=2000, height=600)
 
@@ -106,6 +135,13 @@ st.markdown(f"""
         <span style='background-color:#225ea8;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Extremo</span>
     </div>
     </div>
+</div>
+""", unsafe_allow_html=True)
+
+# Adicione uma instrução para os usuários sobre a interatividade
+st.markdown("""
+<div style="background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+    <b>💡 Dica:</b> Passe o mouse sobre cada estado para ver os valores específicos de emissões de CO₂.
 </div>
 """, unsafe_allow_html=True)
 
