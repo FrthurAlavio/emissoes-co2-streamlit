@@ -34,73 +34,76 @@ st.markdown("""
     """)
 st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
 
+# Seleção de estado e ano - sem colunas
 estados = sorted(df['estado'].unique())
 anos = sorted([col for col in df.columns if col not in ['estado', 'sigla']])
 
 estado_usuario = st.selectbox("Escolha o estado:", estados)
 ano_usuario = st.selectbox("Escolha o ano:", anos)
 
-    if estado_usuario and ano_usuario:
-        valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
-        media_nacional = df[ano_usuario].mean()
-        valor_max = df[ano_usuario].max()
-        estado_max = df.loc[df[ano_usuario] == valor_max, 'estado'].values[0]
+if estado_usuario and ano_usuario:
+    valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
+    media_nacional = df[ano_usuario].mean()
+    valor_max = df[ano_usuario].max()
+    estado_max = df.loc[df[ano_usuario] == valor_max, 'estado'].values[0]
 
-        st.metric(
-            label=f"Emissões em {estado_usuario} ({ano_usuario})",
-            value=f"{round(valor_estado):,} Mt CO₂e",
-            delta=f"{round(valor_estado - media_nacional, 1)} Mt vs. média nacional"
-        )
+    st.metric(
+        label=f"Emissões em {estado_usuario} ({ano_usuario})",
+        value=f"{round(valor_estado):,} Mt CO₂e",
+        delta=f"{round(valor_estado - media_nacional, 1)} Mt vs. média nacional"
+    )
 
-        ranking = df[[ano_usuario, 'estado']].sort_values(by=ano_usuario, ascending=False).reset_index(drop=True)
-        posicao = ranking[ranking['estado'] == estado_usuario].index[0] + 1
-        st.markdown(f"### Comparação Nacional")
-        st.markdown(f"- **Média nacional:** {round(media_nacional, 1):,} Mt CO₂e")
-        st.markdown(f"- **Maior emissor:** {estado_max} ({round(valor_max):,} Mt CO₂e)")
-        st.markdown(f"- **Posição no ranking:** {posicao}º de {len(estados)} estados")
+    ranking = df[[ano_usuario, 'estado']].sort_values(by=ano_usuario, ascending=False).reset_index(drop=True)
+    posicao = ranking[ranking['estado'] == estado_usuario].index[0] + 1
+    st.markdown(f"### Comparação Nacional")
+    st.markdown(f"- **Média nacional:** {round(media_nacional, 1):,} Mt CO₂e")
+    st.markdown(f"- **Maior emissor:** {estado_max} ({round(valor_max):,} Mt CO₂e)")
+    st.markdown(f"- **Posição no ranking:** {posicao}º de {len(estados)} estados")
 
-        if int(ano_usuario) > 1970:
-            ano_anterior = str(int(ano_usuario) - 1)
-            if ano_anterior in df.columns:
-                valor_anterior = df.loc[df['estado'] == estado_usuario, ano_anterior].values[0]
-                variacao = ((valor_estado - valor_anterior) / valor_anterior) * 100
-                st.markdown(f"- **Variação desde {ano_anterior}:** {variacao:.1f}%")
+    if int(ano_usuario) > 1970:
+        ano_anterior = str(int(ano_usuario) - 1)
+        if ano_anterior in df.columns:
+            valor_anterior = df.loc[df['estado'] == estado_usuario, ano_anterior].values[0]
+            variacao = ((valor_estado - valor_anterior) / valor_anterior) * 100
+            st.markdown(f"- **Variação desde {ano_anterior}:** {variacao:.1f}%")
 
-    st.markdown("### 🗺️ Mapa Interativo")
+# Mapa interativo - sem colunas
+st.markdown("### 🗺️ Mapa Interativo")
 
-    # Criar DataFrame para o ano selecionado com siglas e valores
-    data_para_mapa = df[['sigla', ano_usuario]].copy()
-    data_para_mapa.columns = ['UF', 'valor']
+# Criar DataFrame para o ano selecionado com siglas e valores
+data_para_mapa = df[['sigla', ano_usuario]].copy()
+data_para_mapa.columns = ['UF', 'valor']
 
-    # Criar mapa com Folium
-    mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=4, tiles='cartodbpositron')
+# Criar mapa com Folium
+mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=4, tiles='cartodbpositron')
 
-    folium.Choropleth(
-        geo_data=geojson_data,
-        data=data_para_mapa,
-        columns=['UF', 'valor'],
-        key_on='feature.id',
-        fill_color='YlGnBu',
-        fill_opacity=0.7,
-        line_opacity=0.5,
-        highlight=True,
-        line_color='black',
-    ).add_to(mapa)
+folium.Choropleth(
+    geo_data=geojson_data,
+    data=data_para_mapa,
+    columns=['UF', 'valor'],
+    key_on='feature.id',
+    fill_color='YlGnBu',
+    fill_opacity=0.7,
+    line_opacity=0.5,
+    legend_name=f'Emissões de CO₂e em {ano_usuario} (Mt)',
+    highlight=True,
+    line_color='black',
+).add_to(mapa)
 
-    st_folium(mapa, width=700, height=500)
+st_folium(mapa, width=700, height=500)
 
-    # Legenda customizada no painel
-    with st.expander("ℹ️ Legenda do Mapa"):
-        st.markdown(f"""
-        <div style="line-height: 1.6">
-        <b>Escala de Cores para Emissões em {ano_usuario}:</b><br>
-        <span style='background-color:#f7fcfd;color:#000;padding:2px 6px;'>Baixo</span><br>
-        <span style='background-color:#ccece6;color:#000;padding:2px 6px;'>Médio-baixo</span><br>
-        <span style='background-color:#66c2a4;color:#fff;padding:2px 6px;'>Médio</span><br>
-        <span style='background-color:#238b45;color:#fff;padding:2px 6px;'>Alto</span><br>
-        <span style='background-color:#005824;color:#fff;padding:2px 6px;'>Muito Alto</span><br>
-        </div>
-        """, unsafe_allow_html=True)
+# Legenda customizada no painel
+with st.expander("ℹ️ Legenda do Mapa"):
+    st.markdown(f"""
+    <div style="line-height: 1.6">
+    <b>Escala de Cores para Emissões em {ano_usuario}:</b><br>
+    <span style='background-color:#f7fcfd;color:#000;padding:2px 6px;'>Baixo</span><br>
+    <span style='background-color:#ccece6;color:#000;padding:2px 6px;'>Médio-baixo</span><br>
+    <span style='background-color:#66c2a4;color:#fff;padding:2px 6px;'>Médio</span><br>
+    <span style='background-color:#238b45;color:#fff;padding:2px 6px;'>Alto</span><br>
+    <span style='background-color:#005824;color:#fff;padding:2px 6px;'>Muito Alto</span><br>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Adicional
 st.markdown("""
