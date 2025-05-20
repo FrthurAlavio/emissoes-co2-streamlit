@@ -90,20 +90,24 @@ folium.Choropleth(
     line_color='black',
 ).add_to(mapa)
 
-st_folium(mapa, width=2000, height=500)
+st_folium(mapa, width="100%", height=500)
 
-# Legenda customizada no painel
-with st.expander("ℹ️ Legenda do Mapa"):
-    st.markdown(f"""
-    <div style="line-height: 1.6">
-    <b>Escala de Cores para Emissões em {ano_usuario}:</b><br>
-    <span style='background-color:#f7fcfd;color:#000;padding:2px 6px;'>Baixo</span><br>
-    <span style='background-color:#ccece6;color:#000;padding:2px 6px;'>Médio-baixo</span><br>
-    <span style='background-color:#66c2a4;color:#fff;padding:2px 6px;'>Médio</span><br>
-    <span style='background-color:#238b45;color:#fff;padding:2px 6px;'>Alto</span><br>
-    <span style='background-color:#005824;color:#fff;padding:2px 6px;'>Muito Alto</span><br>
+# Legenda customizada mostrada diretamente abaixo do mapa
+st.markdown("#### Legenda do Mapa")
+st.markdown(f"""
+<div style="line-height: 1.6; display: flex; justify-content: center; text-align: center; margin-bottom: 20px;">
+    <div>
+    <b>Escala de Cores para Emissões em {ano_usuario}:</b>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 5px;">
+        <span style='background-color:#f7fcfd;color:#000;padding:2px 10px;border:1px solid #ddd;'>Baixo</span>
+        <span style='background-color:#ccece6;color:#000;padding:2px 10px;border:1px solid #ddd;'>Médio-baixo</span>
+        <span style='background-color:#66c2a4;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Médio</span>
+        <span style='background-color:#238b45;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Alto</span>
+        <span style='background-color:#005824;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Muito Alto</span>
     </div>
-    """, unsafe_allow_html=True)
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # Adicional
 st.markdown("""
