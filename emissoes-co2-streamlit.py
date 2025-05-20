@@ -34,9 +34,6 @@ st.markdown("""
     """)
 st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
 
-col1, col2 = st.columns([1, 2])
-
-with col1:
     estados = sorted(df['estado'].unique())
     anos = sorted([col for col in df.columns if col not in ['estado', 'sigla']])
 
@@ -69,7 +66,6 @@ with col1:
                 variacao = ((valor_estado - valor_anterior) / valor_anterior) * 100
                 st.markdown(f"- **Variação desde {ano_anterior}:** {variacao:.1f}%")
 
-with col2:
     st.markdown("### 🗺️ Mapa Interativo")
 
     # Criar DataFrame para o ano selecionado com siglas e valores
