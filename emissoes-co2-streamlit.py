@@ -34,6 +34,12 @@ st.markdown("""
     """)
 st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
 
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    estados = sorted(df['estado'].unique())
+    anos = sorted([col for col in df.columns if col not in ['estado', 'sigla']])
+
     estado_usuario = st.selectbox("Escolha o estado:", estados)
     ano_usuario = st.selectbox("Escolha o ano:", anos)
 
@@ -63,6 +69,7 @@ st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
                 variacao = ((valor_estado - valor_anterior) / valor_anterior) * 100
                 st.markdown(f"- **Variação desde {ano_anterior}:** {variacao:.1f}%")
 
+with col2:
     st.markdown("### 🗺️ Mapa Interativo")
 
     # Criar DataFrame para o ano selecionado com siglas e valores
@@ -80,7 +87,6 @@ st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
         fill_color='YlGnBu',
         fill_opacity=0.7,
         line_opacity=0.5,
-        legend_name=f'Emissões de CO₂e em {ano_usuario} (Mt)',
         highlight=True,
         line_color='black',
     ).add_to(mapa)
