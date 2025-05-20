@@ -27,10 +27,10 @@ df['sigla'] = df['estado'].map(estado_para_sigla)
 
 # 4. Interface Streamlit
 st.set_page_config(layout="wide", page_title="Emissões de CO2 no Brasil")
-st.title("🌎 Emissões de CO₂ por Estado Brasileiro (1970–2023)")
+st.title("🌎 Emissões de CO₂ por Estado Brasileiro (1972–2023)")
 st.markdown("""
     Este painel apresenta dados históricos de emissões de gases de efeito estufa por estado brasileiro.
-    Os valores são expressos em Milhões de Toneladas de CO₂ equivalente (CO₂e).
+    Os valores são expressos em Milhões de Toneladas (Mt) de CO₂ equivalente (CO₂e).
     """)
 st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
 
