@@ -92,18 +92,19 @@ folium.Choropleth(
 
 st_folium(mapa, width="100%", height=500)
 
-# Legenda customizada mostrada diretamente abaixo do mapa
+# Legenda customizada com as cores corretas do esquema 'YlGnBu'
 st.markdown("#### Legenda do Mapa")
 st.markdown(f"""
 <div style="line-height: 1.6; display: flex; justify-content: center; text-align: center; margin-bottom: 20px;">
     <div>
     <b>Escala de Cores para Emissões em {ano_usuario}:</b>
     <div style="display: flex; justify-content: center; gap: 10px; margin-top: 5px;">
-        <span style='background-color:#f7fcfd;color:#000;padding:2px 10px;border:1px solid #ddd;'>Baixo</span>
-        <span style='background-color:#ccece6;color:#000;padding:2px 10px;border:1px solid #ddd;'>Médio-baixo</span>
-        <span style='background-color:#66c2a4;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Médio</span>
-        <span style='background-color:#238b45;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Alto</span>
-        <span style='background-color:#005824;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Muito Alto</span>
+        <span style='background-color:#ffffd9;color:#000;padding:2px 10px;border:1px solid #ddd;'>Mais baixo</span>
+        <span style='background-color:#c7e9b4;color:#000;padding:2px 10px;border:1px solid #ddd;'>Baixo</span>
+        <span style='background-color:#7fcdbb;color:#000;padding:2px 10px;border:1px solid #ddd;'>Médio</span>
+        <span style='background-color:#41b6c4;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Alto</span>
+        <span style='background-color:#1d91c0;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Muito Alto</span>
+        <span style='background-color:#225ea8;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Extremo</span>
     </div>
     </div>
 </div>
