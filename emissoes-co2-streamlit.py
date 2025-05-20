@@ -92,7 +92,7 @@ with col2:
         line_color='black',
     ).add_to(mapa)
 
-    st_folium(mapa, width=4960, height=3508)
+    st_folium(mapa, width=700, height=500)
 
 # Adicional
 st.markdown("""
