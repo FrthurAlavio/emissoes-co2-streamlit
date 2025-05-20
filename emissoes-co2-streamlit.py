@@ -33,8 +33,6 @@ st.markdown("""
     Os valores são expressos em Milhões de Toneladas (Mt) de CO₂ equivalente (CO₂e).
     """)
 st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
-
-
     estados = sorted(df['estado'].unique())
     anos = sorted([col for col in df.columns if col not in ['estado', 'sigla']])
 
