@@ -75,7 +75,7 @@ data_para_mapa = df[['sigla', ano_usuario]].copy()
 data_para_mapa.columns = ['UF', 'valor']
 
 # Criar mapa com Folium
-mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=4, tiles='cartodbpositron')
+mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=3, tiles='cartodbpositron')
 
 folium.Choropleth(
     geo_data=geojson_data,
@@ -89,7 +89,7 @@ folium.Choropleth(
     line_color='black',
 ).add_to(mapa)
 
-st_folium(mapa, width=2000, height=500)
+st_folium(mapa, width=2000, height=600)
 
 # Legenda customizada com as cores corretas do esquema 'YlGnBu'
 st.markdown("#### Legenda do Mapa")
