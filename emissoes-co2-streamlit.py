@@ -71,7 +71,7 @@ with col1:
 
 with col2:
     st.markdown("### 🗺️ Mapa Interativo")
-    
+
     # Criar DataFrame para o ano selecionado com siglas e valores
     data_para_mapa = df[['sigla', ano_usuario]].copy()
     data_para_mapa.columns = ['UF', 'valor']
@@ -93,6 +93,19 @@ with col2:
     ).add_to(mapa)
 
     st_folium(mapa, width=700, height=500)
+
+    # Legenda customizada no painel
+    with st.expander("ℹ️ Legenda do Mapa"):
+        st.markdown(f"""
+        <div style="line-height: 1.6">
+        <b>Escala de Cores para Emissões em {ano_usuario}:</b><br>
+        <span style='background-color:#f7fcfd;color:#000;padding:2px 6px;'>Baixo</span><br>
+        <span style='background-color:#ccece6;color:#000;padding:2px 6px;'>Médio-baixo</span><br>
+        <span style='background-color:#66c2a4;color:#fff;padding:2px 6px;'>Médio</span><br>
+        <span style='background-color:#238b45;color:#fff;padding:2px 6px;'>Alto</span><br>
+        <span style='background-color:#005824;color:#fff;padding:2px 6px;'>Muito Alto</span><br>
+        </div>
+        """, unsafe_allow_html=True)
 
 # Adicional
 st.markdown("""
