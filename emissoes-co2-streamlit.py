@@ -89,7 +89,7 @@ folium.Choropleth(
     line_color='black',
 ).add_to(mapa)
 
-st_folium(mapa, width=2000, height=600)
+st_folium(mapa, width=2000, height=500)
 
 # Legenda customizada com as cores corretas do esquema 'YlGnBu'
 st.markdown("#### Legenda do Mapa")
