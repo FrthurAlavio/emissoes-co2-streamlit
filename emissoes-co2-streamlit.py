@@ -34,11 +34,11 @@ st.markdown("""
     """)
 st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
 
-    estados = sorted(df['estado'].unique())
-    anos = sorted([col for col in df.columns if col not in ['estado', 'sigla']])
+estados = sorted(df['estado'].unique())
+anos = sorted([col for col in df.columns if col not in ['estado', 'sigla']])
 
-    estado_usuario = st.selectbox("Escolha o estado:", estados)
-    ano_usuario = st.selectbox("Escolha o ano:", anos)
+estado_usuario = st.selectbox("Escolha o estado:", estados)
+ano_usuario = st.selectbox("Escolha o ano:", anos)
 
     if estado_usuario and ano_usuario:
         valor_estado = df.loc[df['estado'] == estado_usuario, ano_usuario].values[0]
