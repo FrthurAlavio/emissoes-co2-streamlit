@@ -90,7 +90,7 @@ folium.Choropleth(
     line_color='black',
 ).add_to(mapa)
 
-st_folium(mapa, width=700, height=500)
+st_folium(mapa, width=2000, height=500)
 
 # Legenda customizada no painel
 with st.expander("ℹ️ Legenda do Mapa"):
