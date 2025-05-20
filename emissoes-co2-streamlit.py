@@ -94,8 +94,9 @@ with col2:
     st_folium(mapa, width=700, height=500)
 
 with col3: 
-    # Legenda customizada no painel
-st.markdown(f"""
+   # Legenda customizada no painel
+    with st.expander("ℹ️ Legenda do Mapa"):
+        st.markdown(f"""
         <div style="line-height: 1.6">
         <b>Escala de Cores para Emissões em {ano_usuario}:</b><br>
         <span style='background-color:#f7fcfd;color:#000;padding:2px 6px;'>Baixo</span><br>
@@ -105,7 +106,6 @@ st.markdown(f"""
         <span style='background-color:#005824;color:#fff;padding:2px 6px;'>Muito Alto</span><br>
         </div>
         """, unsafe_allow_html=True)
-
 # Adicional
 st.markdown("""
 ## ℹ️ Sobre os Dados
