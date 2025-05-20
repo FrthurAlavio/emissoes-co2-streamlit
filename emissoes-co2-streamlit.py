@@ -85,12 +85,11 @@ folium.Choropleth(
     fill_color='YlGnBu',
     fill_opacity=0.7,
     line_opacity=0.5,
-    legend_name=f'Emissões de CO₂e em {ano_usuario} (Mt)',
     highlight=True,
     line_color='black',
 ).add_to(mapa)
 
-st_folium(mapa, width="100%", height=500)
+st_folium(mapa, width=2000, height=500)
 
 # Legenda customizada com as cores corretas do esquema 'YlGnBu'
 st.markdown("#### Legenda do Mapa")
