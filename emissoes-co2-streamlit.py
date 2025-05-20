@@ -77,8 +77,15 @@ st.markdown("### 🗺️ Mapa Interativo")
 data_para_mapa = df[['sigla', 'estado', ano_usuario]].copy()
 data_para_mapa.columns = ['UF', 'Estado', 'valor']
 
-# Criar mapa com Folium
-mapa = folium.Map(location=[-14.2350, -51.9253], zoom_start=4, tiles='cartodbpositron')
+# Criar mapa com Folium - ajustando o zoom e centralização para o Brasil
+mapa = folium.Map(
+    location=[-15.7801, -47.9292],  # Coordenadas mais precisas (próximas a Brasília)
+    zoom_start=4,  # Nível de zoom para ver todo o Brasil
+    tiles='cartodbpositron'
+)
+
+# Garantir que o mapa se ajuste aos limites do Brasil
+mapa.fit_bounds([[-33.8, -73.9], [5.2, -34.8]])  # Coordenadas extremas do Brasil
 
 # Preparar o tooltip com formatação adequada
 tooltip = folium.features.GeoJsonTooltip(
@@ -135,13 +142,6 @@ st.markdown(f"""
         <span style='background-color:#225ea8;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Extremo</span>
     </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Adicione uma instrução para os usuários sobre a interatividade
-st.markdown("""
-<div style="background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
-    <b>💡 Dica:</b> Passe o mouse sobre cada estado para ver os valores específicos de emissões de CO₂.
 </div>
 """, unsafe_allow_html=True)
 
