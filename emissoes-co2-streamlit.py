@@ -34,7 +34,7 @@ st.markdown("""
     """)
 st.markdown("📊 **Fonte:** [SEEG](https://seeg.eco.br/dados/)")
 
-col1, col2 = st.columns([1, 2])
+col1, col2, col3 = st.columns([1, 2, 3])
 
 with col1:
     estados = sorted(df['estado'].unique())
@@ -87,16 +87,15 @@ with col2:
         fill_color='YlGnBu',
         fill_opacity=0.7,
         line_opacity=0.5,
-        legend_name=f'Emissões de CO₂e em {ano_usuario} (Mt)',
         highlight=True,
         line_color='black',
     ).add_to(mapa)
 
     st_folium(mapa, width=700, height=500)
 
+with col3: 
     # Legenda customizada no painel
-    with st.expander("ℹ️ Legenda do Mapa"):
-        st.markdown(f"""
+st.markdown(f"""
         <div style="line-height: 1.6">
         <b>Escala de Cores para Emissões em {ano_usuario}:</b><br>
         <span style='background-color:#f7fcfd;color:#000;padding:2px 6px;'>Baixo</span><br>
