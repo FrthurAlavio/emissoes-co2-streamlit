@@ -30,7 +30,7 @@ df['sigla'] = df['estado'].map(estado_para_sigla)
 
 # 4. Interface Streamlit
 st.set_page_config(layout="wide", page_title="Emissões de CO2 no Brasil")
-st.title("🌎 Emissões de CO₂ por Estado Brasileiro (1972–2023)")
+st.title(" 🇧🇷 Emissões de CO₂ por Estado Brasileiro (1972–2023)")
 st.markdown("""
     Este painel apresenta dados históricos de emissões de gases de efeito estufa por estado brasileiro.
     Os valores são expressos em Milhões de Toneladas (Mt) de CO₂ equivalente (CO₂e).
@@ -125,26 +125,20 @@ folium.GeoJsonTooltip(
     sticky=True
 ).add_to(choropleth.geojson)
 
-st_folium(mapa, width=1000, height=600)
+st_folium(mapa, use_container_width=True, height=600)
 
 # Legenda customizada com as cores corretas do esquema 'YlGnBu'
-st.markdown("#### Legenda do Mapa")
 st.markdown(f"""
-<div style="line-height: 1.6; display: flex; justify-content: center; text-align: center; margin-bottom: 20px;">
-    <div>
-    <b>Escala de Cores para Emissões em {ano_usuario}:</b>
-    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 5px;">
-        <span style='background-color:#ffffd9;color:#000;padding:2px 10px;border:1px solid #ddd;'>Mais baixo</span>
-        <span style='background-color:#c7e9b4;color:#000;padding:2px 10px;border:1px solid #ddd;'>Baixo</span>
-        <span style='background-color:#7fcdbb;color:#000;padding:2px 10px;border:1px solid #ddd;'>Médio</span>
-        <span style='background-color:#41b6c4;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Alto</span>
-        <span style='background-color:#1d91c0;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Muito Alto</span>
-        <span style='background-color:#225ea8;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Extremo</span>
-    </div>
-    </div>
+<b>Escala de Cores para Emissões em {ano_usuario}:</b><br><br>
+<div style="display: flex; flex-wrap: wrap; gap: 6px;">
+    <span style='background-color:#ffffd9;color:#000;padding:4px 8px;border:1px solid #ddd;'>Mais baixo</span>
+    <span style='background-color:#c7e9b4;color:#000;padding:4px 8px;border:1px solid #ddd;'>Baixo</span>
+    <span style='background-color:#7fcdbb;color:#000;padding:4px 8px;border:1px solid #ddd;'>Médio</span>
+    <span style='background-color:#41b6c4;color:#fff;padding:4px 8px;border:1px solid #ddd;'>Alto</span>
+    <span style='background-color:#1d91c0;color:#fff;padding:4px 8px;border:1px solid #ddd;'>Muito Alto</span>
+    <span style='background-color:#225ea8;color:#fff;padding:4px 8px;border:1px solid #ddd;'>Extremo</span>
 </div>
 """, unsafe_allow_html=True)
-
 # Adicional
 st.markdown("""
 ## ℹ️ Sobre os Dados
@@ -154,4 +148,6 @@ Essa medida considera o potencial de aquecimento global de diferentes gases em r
 - **Toneladas de CO₂e**: Quantidade de gases com o mesmo impacto de aquecimento global que uma tonelada de CO₂  
 - Os valores são expressos em **milhões de toneladas** (Mt)
 - Inclui setores como: energia, agropecuária, uso da terra, resíduos e indústria
+
+Feito por [Arquivo ALternativo](https://www.arquivoalternativo.com/)
 """)
