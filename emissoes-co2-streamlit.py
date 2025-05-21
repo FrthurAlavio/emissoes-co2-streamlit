@@ -128,15 +128,20 @@ folium.GeoJsonTooltip(
 st_folium(mapa, width=1000, height=600)
 
 # Legenda customizada com as cores corretas do esquema 'YlGnBu'
+st.markdown("#### Legenda do Mapa")
 st.markdown(f"""
-<b>Escala de Cores para Emissões em {ano_usuario}:</b><br><br>
-<div style="display: flex; flex-wrap: wrap; gap: 6px;">
-    <span style='background-color:#ffffd9;color:#000;padding:4px 8px;border:1px solid #ddd;'>Mais baixo</span>
-    <span style='background-color:#c7e9b4;color:#000;padding:4px 8px;border:1px solid #ddd;'>Baixo</span>
-    <span style='background-color:#7fcdbb;color:#000;padding:4px 8px;border:1px solid #ddd;'>Médio</span>
-    <span style='background-color:#41b6c4;color:#fff;padding:4px 8px;border:1px solid #ddd;'>Alto</span>
-    <span style='background-color:#1d91c0;color:#fff;padding:4px 8px;border:1px solid #ddd;'>Muito Alto</span>
-    <span style='background-color:#225ea8;color:#fff;padding:4px 8px;border:1px solid #ddd;'>Extremo</span>
+<div style="line-height: 1.6; display: flex; justify-content: center; text-align: center; margin-bottom: 20px;">
+    <div>
+    <b>Escala de Cores para Emissões em {ano_usuario}:</b>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 5px;">
+        <span style='background-color:#ffffd9;color:#000;padding:2px 10px;border:1px solid #ddd;'>Mais baixo</span>
+        <span style='background-color:#c7e9b4;color:#000;padding:2px 10px;border:1px solid #ddd;'>Baixo</span>
+        <span style='background-color:#7fcdbb;color:#000;padding:2px 10px;border:1px solid #ddd;'>Médio</span>
+        <span style='background-color:#41b6c4;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Alto</span>
+        <span style='background-color:#1d91c0;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Muito Alto</span>
+        <span style='background-color:#225ea8;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Extremo</span>
+    </div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 # Adicional
@@ -149,5 +154,5 @@ Essa medida considera o potencial de aquecimento global de diferentes gases em r
 - Os valores são expressos em **milhões de toneladas** (Mt)
 - Inclui setores como: energia, agropecuária, uso da terra, resíduos e indústria
 
-Feito por [Arquivo ALternativo](https://www.arquivoalternativo.com/)
+Feito por [Arquivo Alternativo](https://www.arquivoalternativo.com/)
 """)
