@@ -58,7 +58,7 @@ if estado_usuario and ano_usuario:
 
     ranking = df[[ano_usuario, 'estado']].sort_values(by=ano_usuario, ascending=False).reset_index(drop=True)
     posicao = ranking[ranking['estado'] == estado_usuario].index[0] + 1
-    st.markdown(f"### Comparação Nacional")
+    st.markdown(f"### Comparação Nacional ({ano_usuario})")
     st.markdown(f"- **Média nacional:** {round(media_nacional, 1):,} Mt CO₂e")
     st.markdown(f"- **Maior emissor:** {estado_max} ({round(valor_max):,} Mt CO₂e)")
     st.markdown(f"- **Posição no ranking:** {posicao}º de {len(estados)} estados")
