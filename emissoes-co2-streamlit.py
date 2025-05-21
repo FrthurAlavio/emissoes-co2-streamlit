@@ -101,6 +101,7 @@ choropleth = folium.Choropleth(
     data=data_para_mapa,
     columns=['UF', 'valor'],
     key_on='feature.id',
+    legend_title=None,
     fill_color='YlGnBu',
     fill_opacity=0.7,
     line_opacity=0.5,
