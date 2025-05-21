@@ -95,37 +95,31 @@ tooltip = folium.features.GeoJsonTooltip(
     sticky=True
 )
 
-# Criar o choropleth e adicionar interatividade com tooltip
+# Calcular valores para os bins baseados nos dados
+valores = data_para_mapa['valor'].values
+min_valor = valores.min()
+max_valor = valores.max()
+
+# Criar bins baseados em quantis ou intervalos iguais
+import numpy as np
+bins_quantis = np.quantile(valores, [0, 0.2, 0.4, 0.6, 0.8, 1.0]).tolist()
+# Arredonde para números inteiros para melhor visualização
+bins_quantis = [round(val) for val in bins_quantis]
+
+# Criar o choropleth com bins numéricos
 choropleth = folium.Choropleth(
     geo_data=geojson_data,
     data=data_para_mapa,
     columns=['UF', 'valor'],
     key_on='feature.id',
-    bins=['Muito Baixo','Baixo', 'Médio', 'Alto', 'Muito Alto'],
-    legend_title= ' co2 show',
+    bins=bins_quantis,  # Aqui está a correção - usando valores numéricos
     fill_color='YlGnBu',
     fill_opacity=0.7,
     line_opacity=0.5,
     highlight=True,
     line_color='black',
+    legend_name=f'Emissões de CO₂ em {ano_usuario} (Mt CO₂e)'
 ).add_to(mapa)
-
-# Adicionar os dados de emissão para cada estado no GeoJSON
-for feature in choropleth.geojson.data['features']:
-    state_id = feature['id']
-    if state_id in data_para_mapa['UF'].values:
-        valor = data_para_mapa.loc[data_para_mapa['UF'] == state_id, 'valor'].values[0]
-        nome_estado = sigla_para_estado.get(state_id, state_id)
-        feature['properties']['valor_co2'] = f"{int(round(valor)):,} Mt CO₂e"
-        feature['properties']['nome_estado'] = nome_estado
-
-# Adicionar o tooltip ao choropleth
-folium.GeoJsonTooltip(
-    fields=['nome_estado', 'valor_co2'],
-    aliases=['Estado:', 'Emissões:'],
-    style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;"),
-    sticky=True
-).add_to(choropleth.geojson)
 
 st_folium(mapa, width=1000, height=600)
 
