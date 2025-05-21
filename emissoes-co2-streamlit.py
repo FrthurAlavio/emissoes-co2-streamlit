@@ -76,6 +76,7 @@ st.markdown("### 🗺️ Mapa Interativo")
 # Criar DataFrame para o ano selecionado com siglas e valores
 data_para_mapa = df[['sigla', 'estado', ano_usuario]].copy()
 data_para_mapa.columns = ['UF', 'Estado', 'valor']
+data_para_mapa['valor'] = data_para_mapa['valor'].round()  # Arredonda os valores
 
 # Criar mapa com Folium - ajustando o zoom e centralização para o Brasil
 mapa = folium.Map(
@@ -99,7 +100,7 @@ tooltip = folium.features.GeoJsonTooltip(
 choropleth = folium.Choropleth(
     geo_data=geojson_data,
     data=data_para_mapa,
-    columns=['UF', round('valor')],
+    columns=['UF','valor'],
     key_on='feature.id',
     legend_title= None,
     fill_color='YlGnBu',
