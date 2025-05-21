@@ -127,7 +127,7 @@ folium.GeoJsonTooltip(
     sticky=True
 ).add_to(choropleth.geojson)
 
-st_folium(mapa, width=1000, height=600)
+st_folium(mapa, width=2000, height=700)
 
 # Legenda customizada com as cores corretas do esquema 'YlGnBu'
 st.markdown("#### Legenda do Mapa")
