@@ -95,6 +95,8 @@ tooltip = folium.features.GeoJsonTooltip(
     sticky=True
 )
 
+# Parte atualizada do código apenas para o mapa choropleth
+
 # Calcular valores para os bins baseados nos dados
 valores = data_para_mapa['valor'].values
 min_valor = valores.min()
@@ -112,14 +114,107 @@ choropleth = folium.Choropleth(
     data=data_para_mapa,
     columns=['UF', 'valor'],
     key_on='feature.id',
-    bins=bins_quantis,  # Aqui está a correção - usando valores numéricos
+    bins=bins_quantis,  # Corrigido para usar valores numéricos
     fill_color='YlGnBu',
     fill_opacity=0.7,
     line_opacity=0.5,
     highlight=True,
     line_color='black',
-    legend_name=f'Emissões de CO₂ em {ano_usuario} (Mt CO₂e)'
 ).add_to(mapa)
+
+# Adicionar os dados de emissão para cada estado no GeoJSON
+for feature in choropleth.geojson.data['features']:
+    state_id = feature['id']
+    if state_id in data_para_mapa['UF'].values:
+        valor = data_para_mapa.loc[data_para_mapa['UF'] == state_id, 'valor'].values[0]
+        nome_estado = sigla_para_estado.get(state_id, state_id)
+        feature['properties']['valor_co2'] = f"{int(round(valor)):,} Mt CO₂e"
+        feature['properties']['nome_estado'] = nome_estado
+
+# Adicionar o tooltip ao choropleth
+folium.GeoJsonTooltip(
+    fields=['nome_estado', 'valor_co2'],
+    aliases=['Estado:', 'Emissões:'],
+    style=("background-color: white; color: #333333; font-family: arial; font-size: 12px; padding: 10px;"),
+    sticky=True
+).add_to(choropleth.geojson)
+
+# OPÇÃO 1: Manter a legenda padrão do Folium, removendo apenas a que você definiu incorretamente
+# Não é necessário código adicional - a legenda padrão será exibida automaticamente
+
+# OU
+
+# OPÇÃO 2: Remover a legenda padrão e adicionar uma personalizada
+# Remover a legenda padrão
+for key in choropleth._children:
+    if key.startswith('color_map'):
+        del(choropleth._children[key])
+
+# Adicionar legenda personalizada usando branca
+from branca.element import Template, MacroElement
+
+template = """
+{% macro html(this, kwargs) %}
+<div style="
+    position: fixed; 
+    bottom: 50px;
+    right: 50px;
+    width: 200px;
+    height: 170px;
+    z-index: 9999;
+    font-size:14px;
+    background-color: white;
+    border-radius: 6px;
+    padding: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    ">
+    <div style="font-weight: bold; margin-bottom: 8px;">Emissões de CO₂ (Mt)</div>
+    
+    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+        <div style="background-color: #225ea8; width: 20px; height: 20px; margin-right: 5px;"></div>
+        <div>Extremo ({bins_quantis[4]}+)</div>
+    </div>
+    
+    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+        <div style="background-color: #1d91c0; width: 20px; height: 20px; margin-right: 5px;"></div>
+        <div>Muito Alto ({bins_quantis[3]}-{bins_quantis[4]})</div>
+    </div>
+    
+    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+        <div style="background-color: #41b6c4; width: 20px; height: 20px; margin-right: 5px;"></div>
+        <div>Alto ({bins_quantis[2]}-{bins_quantis[3]})</div>
+    </div>
+    
+    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+        <div style="background-color: #7fcdbb; width: 20px; height: 20px; margin-right: 5px;"></div>
+        <div>Médio ({bins_quantis[1]}-{bins_quantis[2]})</div>
+    </div>
+    
+    <div style="display: flex; align-items: center; margin-bottom: 5px;">
+        <div style="background-color: #c7e9b4; width: 20px; height: 20px; margin-right: 5px;"></div>
+        <div>Baixo ({bins_quantis[0]}-{bins_quantis[1]})</div>
+    </div>
+    
+</div>
+{% endmacro %}
+"""
+
+# Substituindo os valores dos bins no template
+template = template.replace('{bins_quantis[0]}', str(bins_quantis[0]))
+template = template.replace('{bins_quantis[1]}', str(bins_quantis[1]))
+template = template.replace('{bins_quantis[2]}', str(bins_quantis[2]))
+template = template.replace('{bins_quantis[3]}', str(bins_quantis[3]))
+template = template.replace('{bins_quantis[4]}', str(bins_quantis[4]))
+
+macro = MacroElement()
+macro._template = Template(template)
+mapa.get_root().add_child(macro)
+
+# Exibir o mapa no Streamlit
+st_folium(mapa, width=1000, height=600)
+
+# Você pode remover ou manter a legenda HTML que já está no código
+# Dependendo se você escolher usar a legenda personalizada em Folium acima
 
 st_folium(mapa, width=1000, height=600)
 
