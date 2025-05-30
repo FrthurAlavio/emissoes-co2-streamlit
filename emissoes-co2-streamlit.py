@@ -78,15 +78,28 @@ data_para_mapa = df[['sigla', 'estado', ano_usuario]].copy()
 data_para_mapa.columns = ['UF', 'Estado', 'valor']
 data_para_mapa['valor'] = data_para_mapa['valor'].round(2)  # Arredonda os valores
 
-# Criar mapa com Folium - ajustando o zoom e centralização para o Brasil
+# Coordenadas dos limites do Brasil para garantir foco adequado
+brasil_bounds = [
+    [-33.8, -73.9],  # Sudoeste (mais ao sul e oeste)
+    [5.2, -34.8]     # Nordeste (mais ao norte e leste)
+]
+
+# Criar mapa com configurações otimizadas para o Brasil
 mapa = folium.Map(
-    location=[-15.7801, -47.9292],  # Coordenadas mais precisas (próximas a Brasília)
-    zoom_start=4,  # Nível de zoom para ver todo o Brasil
-    tiles='cartodbpositron'
+    location=[-14.2350, -51.9253],  # Centro geográfico do Brasil
+    zoom_start=4,
+    tiles='cartodbpositron',
+    # Configurações para manter o foco no Brasil
+    max_bounds=True,
+    min_zoom=3,
+    max_zoom=8,
+    zoom_control=True,
+    scrollWheelZoom=True,
+    dragging=True
 )
 
-# Garantir que o mapa se ajuste aos limites do Brasil
-mapa.fit_bounds([[-33.8, -73.9], [5.2, -34.8]])  # Coordenadas extremas do Brasil
+# Forçar o mapa a se ajustar aos limites do Brasil
+mapa.fit_bounds(brasil_bounds, padding=(20, 20))
 
 # Preparar o tooltip com formatação adequada
 tooltip = folium.features.GeoJsonTooltip(
@@ -102,7 +115,7 @@ choropleth = folium.Choropleth(
     data=data_para_mapa,
     columns=['UF','valor'],
     key_on='feature.id',
-    legend_title= None,
+    legend_title=None,
     fill_color='YlGnBu',
     fill_opacity=0.7,
     line_opacity=0.5,
@@ -127,7 +140,34 @@ folium.GeoJsonTooltip(
     sticky=True
 ).add_to(choropleth.geojson)
 
-st_folium(mapa, width=2000, height=700)
+# Configurar o st_folium com altura responsiva baseada na largura da tela
+# Usando uma proporção de aspecto adequada para o Brasil
+map_data = st_folium(
+    mapa, 
+    width="100%",  # Usar largura total disponível
+    height=600,    # Altura fixa adequada
+    returned_objects=["last_object_clicked_popup"],
+    use_container_width=True  # Importante para responsividade
+)
+
+# Adicionar JavaScript personalizado para garantir que o mapa sempre volte ao Brasil
+st.markdown("""
+<script>
+// Função para resetar o foco do mapa no Brasil
+function resetMapToBrazil() {
+    // Coordenadas dos limites do Brasil
+    var brazilBounds = [[-33.8, -73.9], [5.2, -34.8]];
+    
+    // Se houver um mapa disponível, aplicar os limites
+    if (window.foliumMap) {
+        window.foliumMap.fitBounds(brazilBounds, {padding: [20, 20]});
+    }
+}
+
+// Executar quando a página carregar
+document.addEventListener('DOMContentLoaded', resetMapToBrazil);
+</script>
+""", unsafe_allow_html=True)
 
 # Legenda customizada com as cores corretas do esquema 'YlGnBu'
 st.markdown("#### Legenda do Mapa")
@@ -135,17 +175,18 @@ st.markdown(f"""
 <div style="line-height: 1.6; display: flex; justify-content: center; text-align: center; margin-bottom: 20px;">
     <div>
     <b>Escala de Cores para Emissões em {ano_usuario}:</b>
-    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 5px;">
-        <span style='background-color:#ffffd9;color:#000;padding:2px 10px;border:1px solid #ddd;'>Mais baixo</span>
-        <span style='background-color:#c7e9b4;color:#000;padding:2px 10px;border:1px solid #ddd;'>Baixo</span>
-        <span style='background-color:#7fcdbb;color:#000;padding:2px 10px;border:1px solid #ddd;'>Médio</span>
-        <span style='background-color:#41b6c4;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Alto</span>
-        <span style='background-color:#1d91c0;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Muito Alto</span>
-        <span style='background-color:#225ea8;color:#fff;padding:2px 10px;border:1px solid #ddd;'>Extremo</span>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 5px; flex-wrap: wrap;">
+        <span style='background-color:#ffffd9;color:#000;padding:2px 10px;border:1px solid #ddd; margin: 2px;'>Mais baixo</span>
+        <span style='background-color:#c7e9b4;color:#000;padding:2px 10px;border:1px solid #ddd; margin: 2px;'>Baixo</span>
+        <span style='background-color:#7fcdbb;color:#000;padding:2px 10px;border:1px solid #ddd; margin: 2px;'>Médio</span>
+        <span style='background-color:#41b6c4;color:#fff;padding:2px 10px;border:1px solid #ddd; margin: 2px;'>Alto</span>
+        <span style='background-color:#1d91c0;color:#fff;padding:2px 10px;border:1px solid #ddd; margin: 2px;'>Muito Alto</span>
+        <span style='background-color:#225ea8;color:#fff;padding:2px 10px;border:1px solid #ddd; margin: 2px;'>Extremo</span>
     </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
+
 # Adicional
 st.markdown("""
 ## ℹ️ Sobre os Dados
